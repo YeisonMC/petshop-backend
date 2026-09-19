@@ -1,26 +1,28 @@
 const productosService = require("../services/productos.service");
 
 const obtenerProductos = async (req, res) => {
-    try {
-        const productos = await productosService.obtenerProductos();
+    const resultado = await productosService.obtenerProductos(req.validated.query);
 
-        return res.status(200).json({
-            success: true,
-            message: "Productos obtenidos correctamente",
-            cantidad: productos.length,
-            data: productos
-        });
+    return res.status(200).json({
+        success: true,
+        message: "Productos obtenidos correctamente",
+        ...resultado
+    });
+};
 
-    } catch (error) {
-        console.error("Error al obtener productos:", error);
+const obtenerProductoPorSlug = async (req, res) => {
+    const producto = await productosService.obtenerProductoPorSlug(
+        req.validated.params.slug
+    );
 
-        return res.status(500).json({
-            success: false,
-            message: "Error interno al obtener los productos"
-        });
-    }
+    return res.status(200).json({
+        success: true,
+        message: "Producto obtenido correctamente",
+        data: producto
+    });
 };
 
 module.exports = {
-    obtenerProductos
+    obtenerProductos,
+    obtenerProductoPorSlug
 };
