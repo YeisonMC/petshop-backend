@@ -1,6 +1,9 @@
-const app = require("./app");
-const env = require("./config/env");
-const { verificarConexion, cerrarPool } = require("./config/database");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import app from "./app.js";
+import { cerrarPool, verificarConexion } from "./config/database.js";
+import env from "./config/env.js";
 
 let server;
 let shuttingDown = false;
@@ -37,7 +40,7 @@ const shutdown = (signal) => {
     });
 };
 
-const iniciarServidor = async () => {
+export const iniciarServidor = async () => {
     await verificarConexion();
     console.log("Conexión con MySQL verificada");
 
@@ -55,7 +58,10 @@ const iniciarServidor = async () => {
     return server;
 };
 
-if (require.main === module) {
+const isMainModule = process.argv[1]
+    && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
     iniciarServidor().catch(async (error) => {
         console.error("No se pudo iniciar la API:", error.message);
 
@@ -68,7 +74,3 @@ if (require.main === module) {
         process.exit(1);
     });
 }
-
-module.exports = {
-    iniciarServidor
-};

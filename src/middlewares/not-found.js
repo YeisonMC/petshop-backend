@@ -1,4 +1,4 @@
-const AppError = require("../utils/app-error");
+import AppError from "../utils/app-error.js";
 
 const notFound = (req, res, next) => {
     next(new AppError(
@@ -8,4 +8,4 @@ const notFound = (req, res, next) => {
     ));
 };
 
-module.exports = notFound;
+export default notFound;

@@ -1,4 +1,4 @@
-const { pool } = require("../config/database");
+import { pool } from "../config/database.js";
 
 const buildProductFilters = (filters) => {
     const clauses = ["p.estado = 'ACTIVO'"];
@@ -41,7 +41,7 @@ const buildProductFilters = (filters) => {
     };
 };
 
-const obtenerTodos = async (filters) => {
+export const obtenerTodos = async (filters) => {
     const { whereClause, params } = buildProductFilters(filters);
     const offset = (filters.page - 1) * filters.limit;
 
@@ -110,7 +110,7 @@ const obtenerTodos = async (filters) => {
     };
 };
 
-const obtenerPorSlug = async (slug) => {
+export const obtenerPorSlug = async (slug) => {
     const [productoRows] = await pool.execute(`
         SELECT
             p.id_producto,
@@ -203,9 +203,4 @@ const obtenerPorSlug = async (slug) => {
         imagenes: imagenesResult[0],
         resenas: resenasResult[0][0]
     };
-};
-
-module.exports = {
-    obtenerTodos,
-    obtenerPorSlug
 };

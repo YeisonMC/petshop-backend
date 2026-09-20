@@ -1,6 +1,7 @@
-const { z } = require("zod");
+import dotenv from "dotenv";
+import { z } from "zod";
 
-require("dotenv").config({ quiet: true });
+dotenv.config({ quiet: true });
 
 const envSchema = z.object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -23,4 +24,4 @@ if (!resultado.success) {
     throw new Error(`Configuración de entorno inválida: ${detalles}`);
 }
 
-module.exports = resultado.data;
+export default resultado.data;

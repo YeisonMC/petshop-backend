@@ -1,7 +1,8 @@
-const mysql = require("mysql2/promise");
-const env = require("./env");
+import mysql from "mysql2/promise";
 
-const pool = mysql.createPool({
+import env from "./env.js";
+
+export let pool = mysql.createPool({
     host: env.DB_HOST,
     port: env.DB_PORT,
     user: env.DB_USER,
@@ -14,7 +15,7 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0
 });
 
-const verificarConexion = async () => {
+export const verificarConexion = async () => {
     const connection = await pool.getConnection();
 
     try {
@@ -24,12 +25,14 @@ const verificarConexion = async () => {
     }
 };
 
-const cerrarPool = async () => {
+export const cerrarPool = async () => {
     await pool.end();
 };
 
-module.exports = {
-    pool,
-    verificarConexion,
-    cerrarPool
+export const configurarPoolParaPruebas = (poolDePruebas) => {
+    if (env.NODE_ENV !== "test") {
+        throw new Error("El pool solo puede reemplazarse durante las pruebas");
+    }
+
+    pool = poolDePruebas;
 };

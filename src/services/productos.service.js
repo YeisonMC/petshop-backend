@@ -1,5 +1,5 @@
-const productosRepository = require("../repositories/productos.repository");
-const AppError = require("../utils/app-error");
+import * as productosRepository from "../repositories/productos.repository.js";
+import AppError from "../utils/app-error.js";
 
 const toNumberOrNull = (value) => value === null ? null : Number(value);
 
@@ -39,7 +39,7 @@ const normalizeProductDetail = (producto) => ({
     }
 });
 
-const obtenerProductos = async (filters) => {
+export const obtenerProductos = async (filters) => {
     const { productos, total } = await productosRepository.obtenerTodos(filters);
 
     return {
@@ -53,7 +53,7 @@ const obtenerProductos = async (filters) => {
     };
 };
 
-const obtenerProductoPorSlug = async (slug) => {
+export const obtenerProductoPorSlug = async (slug) => {
     const producto = await productosRepository.obtenerPorSlug(slug);
 
     if (!producto) {
@@ -65,9 +65,4 @@ const obtenerProductoPorSlug = async (slug) => {
     }
 
     return normalizeProductDetail(producto);
-};
-
-module.exports = {
-    obtenerProductos,
-    obtenerProductoPorSlug
 };

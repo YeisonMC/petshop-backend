@@ -1,6 +1,6 @@
-const productosService = require("../services/productos.service");
+import * as productosService from "../services/productos.service.js";
 
-const obtenerProductos = async (req, res) => {
+export const obtenerProductos = async (req, res) => {
     const resultado = await productosService.obtenerProductos(req.validated.query);
 
     return res.status(200).json({
@@ -10,7 +10,7 @@ const obtenerProductos = async (req, res) => {
     });
 };
 
-const obtenerProductoPorSlug = async (req, res) => {
+export const obtenerProductoPorSlug = async (req, res) => {
     const producto = await productosService.obtenerProductoPorSlug(
         req.validated.params.slug
     );
@@ -20,9 +20,4 @@ const obtenerProductoPorSlug = async (req, res) => {
         message: "Producto obtenido correctamente",
         data: producto
     });
-};
-
-module.exports = {
-    obtenerProductos,
-    obtenerProductoPorSlug
 };

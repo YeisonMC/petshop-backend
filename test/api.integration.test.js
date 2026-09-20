@@ -1,10 +1,12 @@
-const assert = require("node:assert/strict");
-const http = require("node:http");
-const { after, before, test } = require("node:test");
+import assert from "node:assert/strict";
+import http from "node:http";
+import { after, before, test } from "node:test";
 
 process.env.NODE_ENV = "test";
-
-const databasePath = require.resolve("../src/config/database");
+process.env.DB_HOST = "127.0.0.1";
+process.env.DB_USER = "test";
+process.env.DB_PASSWORD = "test";
+process.env.DB_NAME = "petshop_test";
 
 const fakePool = {
     execute: async (sql, params = []) => {
@@ -112,14 +114,10 @@ const fakePool = {
     }
 };
 
-require.cache[databasePath] = {
-    id: databasePath,
-    filename: databasePath,
-    loaded: true,
-    exports: { pool: fakePool }
-};
+const { configurarPoolParaPruebas } = await import("../src/config/database.js");
+configurarPoolParaPruebas(fakePool);
 
-const app = require("../src/app");
+const { default: app } = await import("../src/app.js");
 
 let server;
 let baseUrl;

@@ -1,12 +1,12 @@
-const express = require("express");
+import express from "express";
 
-const productosController = require("../controllers/productos.controller");
-const validate = require("../middlewares/validate");
-const asyncHandler = require("../utils/async-handler");
-const {
+import * as productosController from "../controllers/productos.controller.js";
+import validate from "../middlewares/validate.js";
+import asyncHandler from "../utils/async-handler.js";
+import {
     productosQuerySchema,
     productoSlugParamsSchema
-} = require("../validators/productos.validator");
+} from "../validators/productos.validator.js";
 
 const router = express.Router();
 
@@ -22,4 +22,4 @@ router.get(
     asyncHandler(productosController.obtenerProductoPorSlug)
 );
 
-module.exports = router;
+export default router;

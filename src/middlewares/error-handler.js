@@ -1,4 +1,4 @@
-const AppError = require("../utils/app-error");
+import AppError from "../utils/app-error.js";
 
 const normalizeError = (error) => {
     if (error instanceof AppError) {
@@ -42,4 +42,4 @@ const errorHandler = (error, req, res, next) => {
     return res.status(normalizedError.statusCode).json(response);
 };
 
-module.exports = errorHandler;
+export default errorHandler;

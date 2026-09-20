@@ -1,12 +1,12 @@
-const express = require("express");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
+import express from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import morgan from "morgan";
 
-const productosRoutes = require("./routes/productos.routes");
-const categoriasRoutes = require("./routes/categorias.routes");
-const notFound = require("./middlewares/not-found");
-const errorHandler = require("./middlewares/error-handler");
+import categoriasRoutes from "./routes/categorias.routes.js";
+import productosRoutes from "./routes/productos.routes.js";
+import errorHandler from "./middlewares/error-handler.js";
+import notFound from "./middlewares/not-found.js";
 
 const app = express();
 
@@ -38,4 +38,4 @@ app.use("/api/categorias", categoriasRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

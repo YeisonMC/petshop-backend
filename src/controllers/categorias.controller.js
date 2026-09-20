@@ -1,6 +1,6 @@
-const categoriasService = require("../services/categorias.service");
+import * as categoriasService from "../services/categorias.service.js";
 
-const obtenerCategorias = async (req, res) => {
+export const obtenerCategorias = async (req, res) => {
     const categorias = await categoriasService.obtenerCategorias();
 
     return res.status(200).json({
@@ -9,8 +9,4 @@ const obtenerCategorias = async (req, res) => {
         cantidad: categorias.length,
         data: categorias
     });
-};
-
-module.exports = {
-    obtenerCategorias
 };

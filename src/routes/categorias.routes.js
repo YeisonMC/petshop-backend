@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
 
-const categoriasController = require("../controllers/categorias.controller");
-const asyncHandler = require("../utils/async-handler");
+import * as categoriasController from "../controllers/categorias.controller.js";
+import asyncHandler from "../utils/async-handler.js";
 
 const router = express.Router();
 
 router.get("/", asyncHandler(categoriasController.obtenerCategorias));
 
-module.exports = router;
+export default router;

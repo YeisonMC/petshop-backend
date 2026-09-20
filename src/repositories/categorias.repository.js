@@ -1,6 +1,6 @@
-const { pool } = require("../config/database");
+import { pool } from "../config/database.js";
 
-const obtenerTodas = async () => {
+export const obtenerTodas = async () => {
     const [rows] = await pool.execute(`
         SELECT
             c.id_categoria,
@@ -33,8 +33,4 @@ const obtenerTodas = async () => {
     `);
 
     return rows;
-};
-
-module.exports = {
-    obtenerTodas
 };

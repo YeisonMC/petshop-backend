@@ -1,4 +1,4 @@
-const { z } = require("zod");
+import { z } from "zod";
 
 const emptyToUndefined = (value) => value === "" ? undefined : value;
 
@@ -11,7 +11,7 @@ const slugSchema = z.string()
         "El slug solo puede contener letras minúsculas, números y guiones"
     );
 
-const productosQuerySchema = z.object({
+export const productosQuerySchema = z.object({
     page: z.preprocess(
         emptyToUndefined,
         z.coerce.number().int().min(1).default(1)
@@ -40,11 +40,6 @@ const productosQuerySchema = z.object({
     )
 }).strict();
 
-const productoSlugParamsSchema = z.object({
+export const productoSlugParamsSchema = z.object({
     slug: slugSchema
 }).strict();
-
-module.exports = {
-    productosQuerySchema,
-    productoSlugParamsSchema
-};
