@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -9,9 +12,20 @@ import errorHandler from "./middlewares/error-handler.js";
 import notFound from "./middlewares/not-found.js";
 
 const app = express();
+const publicDirectory = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../public"
+);
 
 app.disable("x-powered-by");
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            styleSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "https:"]
+        }
+    }
+}));
 app.use(express.json({ limit: "100kb" }));
 
 if (process.env.NODE_ENV !== "test") {
@@ -25,7 +39,9 @@ app.use(rateLimit({
     legacyHeaders: false
 }));
 
-app.get("/", (req, res) => {
+app.use(express.static(publicDirectory));
+
+app.get("/api/health", (req, res) => {
     res.status(200).json({
         success: true,
         message: "API PetShop funcionando correctamente"

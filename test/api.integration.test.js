@@ -139,6 +139,24 @@ const request = (path) => new Promise((resolve, reject) => {
     }).on("error", reject);
 });
 
+const requestText = (path) => new Promise((resolve, reject) => {
+    http.get(`${baseUrl}${path}`, (response) => {
+        let body = "";
+
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+            body += chunk;
+        });
+        response.on("end", () => {
+            resolve({
+                status: response.statusCode,
+                contentType: response.headers["content-type"],
+                body
+            });
+        });
+    }).on("error", reject);
+});
+
 before(() => new Promise((resolve) => {
     server = app.listen(0, "127.0.0.1", () => {
         const address = server.address();
@@ -150,6 +168,15 @@ before(() => new Promise((resolve) => {
 after(() => new Promise((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
 }));
+
+test("GET / sirve la página de prueba del catálogo", async () => {
+    const response = await requestText("/");
+
+    assert.equal(response.status, 200);
+    assert.match(response.contentType, /text\/html/);
+    assert.match(response.body, /Catálogo de productos/);
+    assert.match(response.body, /bootstrap@5\.3\.8/);
+});
 
 test("GET /api/productos devuelve precio, imagen, stock y paginación", async () => {
     const response = await request("/api/productos?page=1&limit=12");
