@@ -2,15 +2,79 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, test } from "node:test";
 
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 process.env.NODE_ENV = "test";
 process.env.DB_HOST = "127.0.0.1";
 process.env.DB_USER = "test";
 process.env.DB_PASSWORD = "test";
 process.env.DB_NAME = "petshop_test";
+process.env.JWT_SECRET = "test-secret-with-at-least-32-characters";
+process.env.JWT_EXPIRES_IN = "1h";
+process.env.BCRYPT_ROUNDS = "4";
+
+const users = [{
+    id_usuario: 1,
+    id_rol: 1,
+    nombres: "Cliente",
+    apellidos: "Prueba",
+    correo: "cliente@petshop.test",
+    password_hash: await bcrypt.hash("Cliente123", 4),
+    telefono: "999888777",
+    dni: "70000001",
+    ruc: null,
+    estado: 1,
+    fecha_registro: new Date("2026-09-01T00:00:00Z"),
+    ultimo_acceso: null,
+    rol: "CLIENTE_WEB"
+}];
 
 const fakePool = {
     execute: async (sql, params = []) => {
         const normalizedSql = sql.replace(/\s+/g, " ").trim();
+
+        if (normalizedSql.includes("FROM usuarios u") && normalizedSql.includes("WHERE u.correo = ?")) {
+            const user = users.find((item) => item.correo === params[0]);
+            return [user ? [{ ...user }] : [], []];
+        }
+
+        if (normalizedSql.includes("FROM usuarios u") && normalizedSql.includes("WHERE u.id_usuario = ?")) {
+            const user = users.find((item) => item.id_usuario === Number(params[0]));
+            return [user ? [{ ...user }] : [], []];
+        }
+
+        if (normalizedSql.includes("FROM roles") && normalizedSql.includes("WHERE nombre = ?")) {
+            return params[0] === "CLIENTE_WEB"
+                ? [[{ id_rol: 1, nombre: "CLIENTE_WEB" }], []]
+                : [[], []];
+        }
+
+        if (normalizedSql.startsWith("INSERT INTO usuarios")) {
+            const idUsuario = Math.max(...users.map((user) => user.id_usuario)) + 1;
+            users.push({
+                id_usuario: idUsuario,
+                id_rol: params[0],
+                nombres: params[1],
+                apellidos: params[2],
+                correo: params[3],
+                password_hash: params[4],
+                telefono: params[5],
+                dni: params[6],
+                ruc: params[7],
+                estado: 1,
+                fecha_registro: new Date(),
+                ultimo_acceso: null,
+                rol: "CLIENTE_WEB"
+            });
+            return [{ insertId: idUsuario, affectedRows: 1 }, []];
+        }
+
+        if (normalizedSql.startsWith("UPDATE usuarios SET ultimo_acceso")) {
+            const user = users.find((item) => item.id_usuario === Number(params[0]));
+            user.ultimo_acceso = new Date();
+            return [{ affectedRows: 1 }, []];
+        }
 
         if (normalizedSql.includes("COUNT(DISTINCT p.id_producto) AS total")) {
             return [[{ total: 1 }], []];
@@ -122,8 +186,20 @@ const { default: app } = await import("../src/app.js");
 let server;
 let baseUrl;
 
-const request = (path) => new Promise((resolve, reject) => {
-    http.get(`${baseUrl}${path}`, (response) => {
+const request = (path, { method = "GET", body = null, token = null } = {}) => new Promise((resolve, reject) => {
+    const serializedBody = body === null ? null : JSON.stringify(body);
+    const headers = { Accept: "application/json" };
+
+    if (serializedBody) {
+        headers["Content-Type"] = "application/json";
+        headers["Content-Length"] = Buffer.byteLength(serializedBody);
+    }
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const requestInstance = http.request(`${baseUrl}${path}`, { method, headers }, (response) => {
         let body = "";
 
         response.setEncoding("utf8");
@@ -136,7 +212,15 @@ const request = (path) => new Promise((resolve, reject) => {
                 body: JSON.parse(body)
             });
         });
-    }).on("error", reject);
+    });
+
+    requestInstance.on("error", reject);
+
+    if (serializedBody) {
+        requestInstance.write(serializedBody);
+    }
+
+    requestInstance.end();
 });
 
 const requestText = (path) => new Promise((resolve, reject) => {
@@ -176,6 +260,125 @@ test("GET / sirve la página de prueba del catálogo", async () => {
     assert.match(response.contentType, /text\/html/);
     assert.match(response.body, /Catálogo de productos/);
     assert.match(response.body, /bootstrap@5\.3\.8/);
+});
+
+test("POST /api/auth/registro crea un CLIENTE_WEB y devuelve un JWT", async () => {
+    const response = await request("/api/auth/registro", {
+        method: "POST",
+        body: {
+            nombres: "María",
+            apellidos: "López Pérez",
+            correo: "Maria.Nueva@Example.com",
+            password: "Segura123",
+            telefono: "987654321",
+            dni: "70000002"
+        }
+    });
+
+    assert.equal(response.status, 201);
+    assert.equal(response.body.success, true);
+    assert.equal(response.body.data.usuario.correo, "maria.nueva@example.com");
+    assert.equal(response.body.data.usuario.rol, "CLIENTE_WEB");
+    assert.equal(typeof response.body.data.accessToken, "string");
+    assert.equal("password_hash" in response.body.data.usuario, false);
+    assert.notEqual(users[1].password_hash, "Segura123");
+});
+
+test("POST /api/auth/registro rechaza un correo duplicado", async () => {
+    const response = await request("/api/auth/registro", {
+        method: "POST",
+        body: {
+            nombres: "Otro",
+            apellidos: "Cliente",
+            correo: "maria.nueva@example.com",
+            password: "Segura123"
+        }
+    });
+
+    assert.equal(response.status, 409);
+    assert.equal(response.body.error.code, "USER_ALREADY_EXISTS");
+});
+
+test("POST /api/auth/registro valida la seguridad de la contraseña", async () => {
+    const response = await request("/api/auth/registro", {
+        method: "POST",
+        body: {
+            nombres: "Nuevo",
+            apellidos: "Cliente",
+            correo: "nuevo@example.com",
+            password: "debil"
+        }
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.error.code, "VALIDATION_ERROR");
+});
+
+let accessToken;
+
+test("POST /api/auth/login autentica credenciales válidas", async () => {
+    const response = await request("/api/auth/login", {
+        method: "POST",
+        body: {
+            correo: "cliente@petshop.test",
+            password: "Cliente123"
+        }
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.usuario.id_usuario, 1);
+    assert.equal(response.body.data.tokenType, "Bearer");
+    assert.equal(typeof response.body.data.accessToken, "string");
+
+    accessToken = response.body.data.accessToken;
+});
+
+test("POST /api/auth/login no revela cuál credencial es incorrecta", async () => {
+    const response = await request("/api/auth/login", {
+        method: "POST",
+        body: {
+            correo: "cliente@petshop.test",
+            password: "Incorrecta123"
+        }
+    });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.error.code, "INVALID_CREDENTIALS");
+});
+
+test("GET /api/auth/perfil exige autenticación", async () => {
+    const response = await request("/api/auth/perfil");
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.error.code, "AUTHENTICATION_REQUIRED");
+});
+
+test("GET /api/auth/perfil devuelve al usuario autenticado", async () => {
+    const response = await request("/api/auth/perfil", { token: accessToken });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.correo, "cliente@petshop.test");
+    assert.equal(response.body.data.rol, "CLIENTE_WEB");
+    assert.equal("password_hash" in response.body.data, false);
+});
+
+test("GET /api/auth/perfil rechaza tokens inválidos", async () => {
+    const response = await request("/api/auth/perfil", { token: "token-invalido" });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.error.code, "INVALID_TOKEN");
+});
+
+test("GET /api/auth/perfil rechaza roles distintos de CLIENTE_WEB", async () => {
+    const token = jwt.sign(
+        { rol: "ADMIN_CATALOGO" },
+        process.env.JWT_SECRET,
+        { subject: "1", expiresIn: "1h" }
+    );
+    const response = await request("/api/auth/perfil", { token });
+
+    assert.equal(response.status, 403);
+    assert.equal(response.body.error.code, "FORBIDDEN");
 });
 
 test("GET /api/productos devuelve precio, imagen, stock y paginación", async () => {
