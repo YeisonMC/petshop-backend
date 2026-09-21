@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Prueba de consumo del API de productos de PetShop">
+    <title>PetShop | Catálogo de prueba</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous"
+    >
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-body-tertiary">
+    <header class="catalog-header text-white">
+        <div class="container py-5">
+            <span class="badge rounded-pill text-bg-light mb-3">PetShop Demo</span>
+            <h1 class="display-5 fw-bold">Catálogo de productos</h1>
+            <p class="lead mb-0">
+                Vista temporal para validar el consumo de la API del backend.
+            </p>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <section aria-labelledby="productos-title">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-between align-items-sm-center mb-4">
+                <div>
+                    <h2 id="productos-title" class="h3 mb-1">Productos disponibles</h2>
+                    <p id="resumen" class="text-body-secondary mb-0">Consultando el catálogo...</p>
+                </div>
+                <button id="actualizar" class="btn btn-primary align-self-start" type="button">
+                    Actualizar productos
+                </button>
+            </div>
+
+            <div id="estado" class="text-center py-5" role="status" aria-live="polite">
+                <div class="spinner-border text-primary" aria-hidden="true"></div>
+                <p class="mt-3 mb-0">Cargando productos...</p>
+            </div>
+
+            <div id="productos" class="row g-4" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <template id="producto-template">
+        <article class="col-12 col-sm-6 col-lg-4 col-xl-3">
+            <div class="card product-card h-100 border-0 shadow-sm">
+                <div class="product-media bg-white">
+                    <img class="card-img-top product-image" alt="" loading="lazy">
+                    <div class="product-placeholder" aria-hidden="true">🐾</div>
+                    <span class="offer-badge badge text-bg-danger">Oferta</span>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <p class="product-brand small text-uppercase text-body-secondary fw-semibold mb-1"></p>
+                    <h3 class="product-name h5 card-title"></h3>
+                    <p class="product-description card-text text-body-secondary small flex-grow-1"></p>
+                    <div class="d-flex justify-content-between align-items-end gap-2 mt-3">
+                        <div>
+                            <p class="product-regular-price small text-body-secondary text-decoration-line-through mb-0"></p>
+                            <p class="product-price h5 text-primary fw-bold mb-0"></p>
+                        </div>
+                        <span class="product-stock badge"></span>
+                    </div>
+                    <a class="product-detail btn btn-outline-primary btn-sm mt-3" target="_blank" rel="noreferrer">
+                        Ver respuesta del detalle
+                    </a>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <script type="module" src="/productos.js"></script>
+</body>
+</html>
