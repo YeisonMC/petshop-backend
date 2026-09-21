@@ -33,6 +33,10 @@ npm test
 - `POST /api/auth/registro`: registra un usuario con el rol `CLIENTE_WEB`.
 - `POST /api/auth/login`: autentica al usuario y devuelve un token JWT.
 - `GET /api/auth/perfil`: devuelve el perfil asociado al token Bearer.
+- `GET /api/carrito`: obtiene el carrito activo del cliente autenticado.
+- `POST /api/carrito/items`: agrega una variante al carrito.
+- `PATCH /api/carrito/items/:idVariante`: reemplaza la cantidad de una variante.
+- `DELETE /api/carrito/items/:idVariante`: elimina una variante del carrito.
 - `GET /api/productos`: catálogo paginado. Acepta `page`, `limit`, `search`,
   `categoria`, `id_marca` y `destacado`.
 - `GET /api/productos/:slug`: detalle de un producto con categorías, variantes,
@@ -49,3 +53,7 @@ o inicio de sesión:
 ```http
 Authorization: Bearer <token>
 ```
+
+El precio de los productos del carrito se obtiene siempre desde MySQL. Las
+operaciones de escritura validan el stock disponible y se ejecutan dentro de
+una transacción.

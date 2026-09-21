@@ -29,6 +29,22 @@ export const cerrarPool = async () => {
     await pool.end();
 };
 
+export const ejecutarTransaccion = async (callback) => {
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const result = await callback(connection);
+        await connection.commit();
+        return result;
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
 export const configurarPoolParaPruebas = (poolDePruebas) => {
     if (env.NODE_ENV !== "test") {
         throw new Error("El pool solo puede reemplazarse durante las pruebas");
