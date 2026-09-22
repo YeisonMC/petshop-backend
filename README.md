@@ -37,6 +37,11 @@ npm test
 - `POST /api/carrito/items`: agrega una variante al carrito.
 - `PATCH /api/carrito/items/:idVariante`: reemplaza la cantidad de una variante.
 - `DELETE /api/carrito/items/:idVariante`: elimina una variante del carrito.
+- `GET /api/direcciones`: lista las direcciones activas del cliente autenticado.
+- `POST /api/direcciones`: crea una dirección; la primera será principal.
+- `PATCH /api/direcciones/:id`: actualiza los datos de una dirección propia.
+- `PATCH /api/direcciones/:id/principal`: establece una dirección propia como principal.
+- `DELETE /api/direcciones/:id`: desactiva una dirección propia.
 - `GET /api/productos`: catálogo paginado. Acepta `page`, `limit`, `search`,
   `categoria`, `id_marca` y `destacado`.
 - `GET /api/productos/:slug`: detalle de un producto con categorías, variantes,
@@ -57,3 +62,10 @@ Authorization: Bearer <token>
 El precio de los productos del carrito se obtiene siempre desde MySQL. Las
 operaciones de escritura validan el stock disponible y se ejecutan dentro de
 una transacción.
+
+Las rutas de direcciones requieren un token `CLIENTE_WEB`. El cliente solo puede
+consultar y modificar sus propias direcciones. `DELETE` realiza una baja lógica
+para conservar las direcciones que puedan estar vinculadas a pedidos; si se
+desactiva la principal, la dirección activa más antigua pasa a ser principal.
+Los campos opcionales (`alias_direccion`, `direccion_linea2`, `codigo_postal` y
+`referencia`) se pueden borrar enviando `null` en `PATCH`.
