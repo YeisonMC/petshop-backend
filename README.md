@@ -20,6 +20,16 @@ Route -> Controller -> Service -> Repository -> MySQL
    al menos 32 caracteres, sin versionar el archivo `.env`.
 3. Instalar dependencias con `npm ci`.
 
+## Migraciones de base de datos
+
+Después de crear la base con el esquema inicial, aplicar una sola vez, en orden,
+los archivos SQL de `db/migrations/` con una cuenta administradora de MySQL.
+La cuenta usada por la API no necesita permisos `ALTER`. La migración
+`20260924_add_reserva_expira_at_to_pedidos.sql` agrega a `pedidos` una fecha de
+vencimiento nullable para la futura reserva de inventario. Los pedidos existentes
+conservan `NULL`; todavía no se crean reservas ni se ejecuta una tarea de
+expiración.
+
 ## Comandos
 
 ```bash
