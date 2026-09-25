@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import carritoRoutes from "./routes/carrito.routes.js";
 import categoriasRoutes from "./routes/categorias.routes.js";
 import direccionesRoutes from "./routes/direcciones.routes.js";
+import pedidosRoutes from "./routes/pedidos.routes.js";
 import productosRoutes from "./routes/productos.routes.js";
 import errorHandler from "./middlewares/error-handler.js";
 import notFound from "./middlewares/not-found.js";
@@ -54,6 +55,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/carrito", carritoRoutes);
 app.use("/api/direcciones", direccionesRoutes);
+app.use("/api/pedidos", pedidosRoutes);
 app.use("/api/productos", productosRoutes);
 app.use("/api/categorias", categoriasRoutes);
 

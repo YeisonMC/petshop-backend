@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 import app from "./app.js";
 import { cerrarPool, verificarConexion } from "./config/database.js";
 import env from "./config/env.js";
+import { iniciarExpiracionReservas } from "./jobs/expirar-reservas.job.js";
 
 let server;
 let shuttingDown = false;
+let detenerExpiracionReservas = async () => {};
 
 const shutdown = (signal) => {
     if (shuttingDown || !server) {
@@ -25,6 +27,7 @@ const shutdown = (signal) => {
 
     server.close(async (error) => {
         try {
+            await detenerExpiracionReservas();
             await cerrarPool();
         } catch (poolError) {
             console.error("No se pudo cerrar el pool de MySQL:", poolError);
@@ -51,6 +54,8 @@ export const iniciarServidor = async () => {
         console.log(`Servidor ejecutándose en puerto ${env.PORT}`);
         console.log(`Entorno: ${env.NODE_ENV}`);
     });
+
+    detenerExpiracionReservas = iniciarExpiracionReservas();
 
     process.once("SIGTERM", () => shutdown("SIGTERM"));
     process.once("SIGINT", () => shutdown("SIGINT"));
