@@ -13,6 +13,14 @@ const normalizeError = (error) => {
         );
     }
 
+    if (["ER_ROW_IS_REFERENCED_2", "ER_NO_REFERENCED_ROW_2", "ER_CHECK_CONSTRAINT_VIOLATED"].includes(error.code)) {
+        return new AppError(
+            "La operación entra en conflicto con los datos relacionados",
+            409,
+            "DATA_CONFLICT"
+        );
+    }
+
     return new AppError(
         "Ocurrió un error interno en el servidor",
         500,

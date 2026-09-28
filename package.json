@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node test/api.integration.test.js && node test/carrito.integration.test.js && node test/direcciones.integration.test.js && node test/pedidos.integration.test.js"
+    "test": "node test/api.integration.test.js && node test/carrito.integration.test.js && node test/direcciones.integration.test.js && node test/pedidos.integration.test.js && node test/admin.integration.test.js",
+    "smoke:admin": "node scripts/smoke-admin-catalog.js",
+    "smoke:admin:sql": "node scripts/smoke-admin-sql.js",
+    "admin:create": "node scripts/create-catalog-admin.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +19,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "aos": "^2.3.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.1",
     "express": "^5.2.1",

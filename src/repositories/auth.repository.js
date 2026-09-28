@@ -14,7 +14,8 @@ const USER_SELECT = `
         u.estado,
         u.fecha_registro,
         u.ultimo_acceso,
-        r.nombre AS rol
+        r.nombre AS rol,
+        r.estado AS rol_activo
     FROM usuarios u
     INNER JOIN roles r
         ON r.id_rol = u.id_rol

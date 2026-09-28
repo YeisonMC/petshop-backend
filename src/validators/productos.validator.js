@@ -12,6 +12,8 @@ const slugSchema = z.string()
     );
 
 export const productosQuerySchema = z.object({
+    sort: z.enum(["destacados", "recientes", "precio_asc", "precio_desc", "nombre"])
+        .default("destacados"),
     page: z.preprocess(
         emptyToUndefined,
         z.coerce.number().int().min(1).default(1)

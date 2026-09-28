@@ -7,6 +7,9 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import authRoutes from "./routes/auth.routes.js";
+import adminAuthRoutes from "./routes/admin-auth.routes.js";
+import adminCatalogRoutes from "./routes/admin-catalog.routes.js";
+import adminInventoryRoutes from "./routes/admin-inventory.routes.js";
 import carritoRoutes from "./routes/carrito.routes.js";
 import categoriasRoutes from "./routes/categorias.routes.js";
 import direccionesRoutes from "./routes/direcciones.routes.js";
@@ -20,6 +23,7 @@ const publicDirectory = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "../public"
 );
+const aosDirectory = path.join(publicDirectory, "../node_modules/aos/dist");
 
 app.disable("x-powered-by");
 app.use(helmet({
@@ -44,6 +48,7 @@ app.use(rateLimit({
 }));
 
 app.use(express.static(publicDirectory));
+app.use("/vendor/aos", express.static(aosDirectory, { index: false, maxAge: "1d" }));
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({
@@ -53,6 +58,9 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/admin/inventario", adminInventoryRoutes);
+app.use("/api/admin", adminCatalogRoutes);
 app.use("/api/carrito", carritoRoutes);
 app.use("/api/direcciones", direccionesRoutes);
 app.use("/api/pedidos", pedidosRoutes);

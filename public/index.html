@@ -3,75 +3,66 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Prueba de consumo del API de productos de PetShop">
-    <title>PetShop | Catálogo de prueba</title>
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-        crossorigin="anonymous"
-    >
+    <meta name="description" content="Descubre productos para cuidar y consentir a tu mascota en PetShop.">
+    <meta name="theme-color" content="#f5f7f2">
+    <title>PetShop | Todo para su mejor vida</title>
+    <link rel="stylesheet" href="/vendor/aos/aos.css">
     <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="bg-body-tertiary">
-    <header class="catalog-header text-white">
-        <div class="container py-5">
-            <span class="badge rounded-pill text-bg-light mb-3">PetShop Demo</span>
-            <h1 class="display-5 fw-bold">Catálogo de productos</h1>
-            <p class="lead mb-0">
-                Vista temporal para validar el consumo de la API del backend.
-            </p>
-        </div>
-    </header>
+<body>
+    <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <symbol id="paw" viewBox="0 0 24 24"><path d="M12 20c-2.2 0-3.1-1.5-5.2-1.5-1.7 0-3.2-.9-3.2-2.6 0-2.1 2.2-3.2 3.7-4.8 1.2-1.3 2.5-2.6 4.7-2.6s3.5 1.3 4.7 2.6c1.5 1.6 3.7 2.7 3.7 4.8 0 1.7-1.5 2.6-3.2 2.6-2.1 0-3 1.5-5.2 1.5ZM5.4 8.6c-.8.4-2-.2-2.7-1.4-.7-1.2-.6-2.5.2-2.9.8-.5 2 .2 2.7 1.4.7 1.2.6 2.5-.2 2.9Zm4.2-2c-.9.1-1.8-.9-2-2.3-.2-1.4.4-2.6 1.3-2.7.9-.1 1.8.9 2 2.3.2 1.4-.4 2.6-1.3 2.7Zm4.8 0c-.9-.1-1.5-1.3-1.3-2.7.2-1.4 1.1-2.4 2-2.3.9.1 1.5 1.3 1.3 2.7-.2 1.4-1.1 2.4-2 2.3Zm4.2 2c-.8-.4-.9-1.7-.2-2.9.7-1.2 1.9-1.9 2.7-1.4.8.4.9 1.7.2 2.9-.7 1.2-1.9 1.8-2.7 1.4Z" fill="currentColor"/></symbol>
+        <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+        <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+        <symbol id="spark" viewBox="0 0 24 24"><path d="m12 2 1.8 7.2L21 11l-7.2 1.8L12 20l-1.8-7.2L3 11l7.2-1.8L12 2Z"/></symbol>
+        <symbol id="heart" viewBox="0 0 24 24"><path d="M20.8 7.5c0 4.2-8.8 10.9-8.8 10.9S3.2 11.7 3.2 7.5a4.3 4.3 0 0 1 8.8-.7 4.3 4.3 0 0 1 8.8.7Z"/></symbol>
+        <symbol id="shield" viewBox="0 0 24 24"><path d="m12 2 8 4v6c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6l8-4Z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></symbol>
+        <symbol id="close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+    </svg>
 
-    <main class="container py-5">
-        <section aria-labelledby="productos-title">
-            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-between align-items-sm-center mb-4">
-                <div>
-                    <h2 id="productos-title" class="h3 mb-1">Productos disponibles</h2>
-                    <p id="resumen" class="text-body-secondary mb-0">Consultando el catálogo...</p>
-                </div>
-                <button id="actualizar" class="btn btn-primary align-self-start" type="button">
-                    Actualizar productos
-                </button>
+    <div class="announcement"><span class="announcement-dot"></span> Un mundo mejor para sus cuatro patas <span class="announcement-star">✦</span> Descubre nuestro catálogo</div>
+    <header class="site-header"><div class="shell header-inner">
+        <a class="brand" href="/" aria-label="PetShop, inicio"><span class="brand-mark"><svg><use href="#paw"></use></svg></span><span>petshop<span class="brand-dot">.</span></span></a>
+        <nav class="main-nav" aria-label="Navegación principal"><a href="#catalogo">Catálogo</a><a href="#por-que-petshop">Por qué PetShop</a></nav>
+        <a class="header-admin" href="/admin/">Administración <svg><use href="#arrow"></use></svg></a>
+    </div></header>
+
+    <main>
+        <section class="hero shell" aria-labelledby="hero-title">
+            <div class="hero-copy" data-aos="fade-up" data-aos-duration="650">
+                <span class="eyebrow"><svg><use href="#spark"></use></svg> PARA QUIENES SON FAMILIA</span>
+                <h1 id="hero-title">Su felicidad empieza <em>aquí.</em></h1>
+                <p>Todo lo que necesitan para jugar, crecer y sentirse bien. Explora productos elegidos pensando en ellos.</p>
+                <div class="hero-actions"><a href="#catalogo" class="button button-primary">Explorar productos <svg><use href="#arrow"></use></svg></a><span class="hero-note"><span class="note-spark">✳</span> Cuidarlos es nuestra pasión</span></div>
             </div>
-
-            <div id="estado" class="text-center py-5" role="status" aria-live="polite">
-                <div class="spinner-border text-primary" aria-hidden="true"></div>
-                <p class="mt-3 mb-0">Cargando productos...</p>
-            </div>
-
-            <div id="productos" class="row g-4" aria-live="polite"></div>
+            <div class="hero-visual" aria-hidden="true" data-aos="fade-left" data-aos-duration="800"><div class="hero-circle hero-circle-back"></div><div class="hero-circle hero-circle-front"></div><div class="hero-paw"><svg><use href="#paw"></use></svg></div><div class="visual-badge visual-badge-top"><span>✦</span> Hecho para sus mejores días</div><div class="visual-badge visual-badge-bottom"><span>♥</span> Amor en cada detalle</div><span class="visual-star star-one">✦</span><span class="visual-star star-two">✳</span></div>
         </section>
-    </main>
 
-    <template id="producto-template">
-        <article class="col-12 col-sm-6 col-lg-4 col-xl-3">
-            <div class="card product-card h-100 border-0 shadow-sm">
-                <div class="product-media bg-white">
-                    <img class="card-img-top product-image" alt="" loading="lazy">
-                    <div class="product-placeholder" aria-hidden="true">🐾</div>
-                    <span class="offer-badge badge text-bg-danger">Oferta</span>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <p class="product-brand small text-uppercase text-body-secondary fw-semibold mb-1"></p>
-                    <h3 class="product-name h5 card-title"></h3>
-                    <p class="product-description card-text text-body-secondary small flex-grow-1"></p>
-                    <div class="d-flex justify-content-between align-items-end gap-2 mt-3">
-                        <div>
-                            <p class="product-regular-price small text-body-secondary text-decoration-line-through mb-0"></p>
-                            <p class="product-price h5 text-primary fw-bold mb-0"></p>
-                        </div>
-                        <span class="product-stock badge"></span>
-                    </div>
-                    <a class="product-detail btn btn-outline-primary btn-sm mt-3" target="_blank" rel="noreferrer">
-                        Ver respuesta del detalle
-                    </a>
-                </div>
+        <section id="por-que-petshop" class="promise-strip" aria-label="Nuestra promesa"><div class="shell promise-grid">
+            <div class="promise" data-aos="fade-up"><span class="promise-icon"><svg><use href="#heart"></use></svg></span><div><strong>Pensado para ellos</strong><small>Productos elegidos con cariño</small></div></div>
+            <div class="promise" data-aos="fade-up" data-aos-delay="100"><span class="promise-icon"><svg><use href="#shield"></use></svg></span><div><strong>Compra con confianza</strong><small>Información clara y actualizada</small></div></div>
+            <div class="promise" data-aos="fade-up" data-aos-delay="200"><span class="promise-icon"><svg><use href="#spark"></use></svg></span><div><strong>Siempre novedades</strong><small>Un catálogo para descubrir</small></div></div>
+        </div></section>
+
+        <section id="catalogo" class="catalog-section shell" aria-labelledby="catalog-title">
+            <div class="section-heading" data-aos="fade-up"><div><span class="eyebrow eyebrow-green">EXPLORA Y DESCUBRE</span><h2 id="catalog-title">El catálogo PetShop<span>.</span></h2><p>Encuentra ese detalle que hará mover su cola.</p></div><span class="section-decoration" aria-hidden="true">✳</span></div>
+            <div class="catalog-toolbar" data-aos="fade-up">
+                <label class="search-box"><svg><use href="#search"></use></svg><span class="sr-only">Buscar productos</span><input id="search-input" type="search" placeholder="¿Qué estás buscando?" autocomplete="off"></label>
+                <label class="select-box"><span class="sr-only">Categoría</span><select id="category-select"><option value="">Todas las categorías</option></select></label>
+                <label class="select-box"><span class="sr-only">Ordenar productos</span><select id="sort-select"><option value="destacados">Destacados</option><option value="recientes">Más recientes</option><option value="precio_asc">Menor precio</option><option value="precio_desc">Mayor precio</option><option value="nombre">Nombre A–Z</option></select></label>
             </div>
-        </article>
-    </template>
+            <div class="catalog-meta"><span id="resumen" aria-live="polite">Preparando el catálogo...</span><label class="featured-filter"><input id="featured-only" type="checkbox"><span>Solo destacados</span></label></div>
+            <div id="estado" class="state-panel" role="status" aria-live="polite"><span class="loading-ring"></span><strong>Buscando cosas bonitas para ellos...</strong></div>
+            <div id="productos" class="product-grid" aria-live="polite"></div>
+            <div id="pagination" class="catalog-pagination"></div>
+        </section>
 
+        <section class="bottom-cta shell" data-aos="fade-up"><div><span class="eyebrow">PETSHOP ES PARA ELLOS</span><h2>Más momentos felices, <em>una elección a la vez.</em></h2></div><a href="#catalogo" class="button button-light">Seguir explorando <svg><use href="#arrow"></use></svg></a></section>
+    </main>
+    <footer class="footer"><div class="shell footer-inner"><span class="brand"><span class="brand-mark"><svg><use href="#paw"></use></svg></span><span>petshop<span class="brand-dot">.</span></span></span><p>Un espacio para cuidar a quienes más nos alegran la vida.</p><span>© 2026 PetShop</span></div></footer>
+
+    <dialog id="product-dialog" class="product-dialog" aria-labelledby="detail-title"><button id="close-detail" class="dialog-close" type="button" aria-label="Cerrar detalle"><svg><use href="#close"></use></svg></button><div id="detail-content"></div></dialog>
+    <script defer src="/vendor/aos/aos.js"></script>
     <script type="module" src="/productos.js"></script>
 </body>
 </html>
