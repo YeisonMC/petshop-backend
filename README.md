@@ -84,6 +84,29 @@ El panel usa `sessionStorage` para el token: cerrar la pestaña termina la
 sesión local. En producción se debe servir todo por HTTPS. El inicio de sesión
 administrativo tiene un límite adicional de 10 intentos cada 15 minutos por IP.
 
+## Nginx y límite de solicitudes
+
+Node escucha únicamente en `127.0.0.1:3000`; accede al sitio y a la API por el
+dominio HTTPS de Nginx, no por el puerto 3000 público. En el bloque `location /`
+del servidor HTTPS, configura la conexión con estas cabeceras:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+}
+```
+
+Usa `$remote_addr` en lugar de `$proxy_add_x_forwarded_for` para reemplazar
+cualquier cabecera enviada por el visitante. Express solo confía en un proxy
+local. El límite general es de 300 solicitudes por IP cada 15 minutos y solo
+se aplica a `/api`; las páginas, CSS, JavaScript e imágenes no lo consumen.
+Mantén la regla pública del puerto 3000 cerrada en el NSG de Azure; expón solo
+80/443 y el acceso SSH restringido que necesites.
+
 ## Endpoints actuales
 
 - `POST /api/auth/registro`: registra un usuario con el rol `CLIENTE_WEB`.

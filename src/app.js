@@ -26,6 +26,8 @@ const publicDirectory = path.join(
 const aosDirectory = path.join(publicDirectory, "../node_modules/aos/dist");
 
 app.disable("x-powered-by");
+// Solo Nginx en esta misma VM puede aportar la IP real del cliente.
+app.set("trust proxy", "loopback");
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -40,15 +42,15 @@ if (process.env.NODE_ENV !== "test") {
     app.use(morgan("dev"));
 }
 
-app.use(rateLimit({
+app.use(express.static(publicDirectory));
+app.use("/vendor/aos", express.static(aosDirectory, { index: false, maxAge: "1d" }));
+
+app.use("/api", rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    limit: 300,
     standardHeaders: "draft-8",
     legacyHeaders: false
 }));
-
-app.use(express.static(publicDirectory));
-app.use("/vendor/aos", express.static(aosDirectory, { index: false, maxAge: "1d" }));
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({

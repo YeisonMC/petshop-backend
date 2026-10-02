@@ -47,7 +47,7 @@ export const iniciarServidor = async () => {
     await verificarConexion();
     console.log("Conexión con MySQL verificada");
 
-    server = app.listen(env.PORT, "0.0.0.0", () => {
+    server = app.listen(env.PORT, "127.0.0.1", () => {
         console.log("=================================");
         console.log("     PETSHOP API INICIADA");
         console.log("=================================");
