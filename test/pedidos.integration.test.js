@@ -11,6 +11,8 @@ process.env.DB_NAME = "petshop_test";
 process.env.JWT_SECRET = "test-secret-with-at-least-32-characters";
 process.env.JWT_EXPIRES_IN = "1h";
 process.env.BCRYPT_ROUNDS = "4";
+process.env.STRIPE_PUBLISHABLE_KEY = "pk_test_mock";
+process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_mock";
 
 const state = {
     addresses: [{ id_direccion: 1, id_usuario: 1 }, { id_direccion: 2, id_usuario: 2 }],
@@ -18,10 +20,47 @@ const state = {
     cartItems: [{ id_carrito: 1, id_variante: 2, cantidad: 2 }],
     inventory: { stock_actual: 65, stock_reservado: 5 },
     orders: [],
+    payments: [],
     details: [],
     movements: [],
     nextOrderId: 1,
-    nextDetailId: 1
+    nextDetailId: 1,
+    nextPaymentId: 1
+};
+
+const intents = new Map();
+let nextIntentId = 1;
+let intentCreates = 0;
+const fakeStripe = {
+    paymentIntents: {
+        create: async ({ amount, currency, metadata }) => {
+            intentCreates++;
+            const intent = {
+                id: `pi_test_${nextIntentId++}`,
+                client_secret: `pi_secret_test_${nextIntentId}`,
+                amount,
+                amount_received: 0,
+                currency,
+                metadata,
+                status: "requires_payment_method"
+            };
+            intents.set(intent.id, intent);
+            return intent;
+        },
+        retrieve: async (id) => intents.get(id),
+        cancel: async (id) => {
+            const intent = intents.get(id);
+            if (intent.status === "succeeded") throw new Error("Already succeeded");
+            intent.status = "canceled";
+            return intent;
+        }
+    },
+    webhooks: {
+        constructEvent: (body, signature) => {
+            if (signature !== "test-signature") throw new Error("Invalid signature");
+            return JSON.parse(body.toString());
+        }
+    }
 };
 
 let snapshot;
@@ -147,6 +186,49 @@ const execute = async (sql, params = []) => {
         return [expired.map((item) => ({ id_pedido: item.id_pedido })), []];
     }
 
+    if (query.startsWith("UPDATE inventario SET stock_actual = stock_actual -")) {
+        const amount = Number(params[0]);
+        const enough = Number(params[2]) === 2
+            && state.inventory.stock_actual >= amount
+            && state.inventory.stock_reservado >= amount;
+        if (enough) {
+            state.inventory.stock_actual -= amount;
+            state.inventory.stock_reservado -= amount;
+        }
+        return [{ affectedRows: Number(enough) }, []];
+    }
+
+    if (query.includes("FROM pagos")) {
+        const payment = state.payments.filter((item) => item.id_pedido === Number(params[0])).at(-1);
+        return [payment ? [{ ...payment }] : [], []];
+    }
+
+    if (query.startsWith("INSERT INTO pagos")) {
+        const payment = {
+            id_pago: state.nextPaymentId++,
+            id_pedido: Number(params[0]),
+            metodo_pago: "TARJETA",
+            monto: params[1],
+            moneda: "PEN",
+            estado: "PENDIENTE",
+            referencia_transaccion: params[2]
+        };
+        state.payments.push(payment);
+        return [{ insertId: payment.id_pago, affectedRows: 1 }, []];
+    }
+
+    if (query.startsWith("UPDATE pagos SET estado = 'APROBADO'")) {
+        const payment = state.payments.find((item) => item.id_pago === Number(params[0]));
+        if (payment?.estado === "PENDIENTE") payment.estado = "APROBADO";
+        return [{ affectedRows: Number(payment?.estado === "APROBADO") }, []];
+    }
+
+    if (query.startsWith("UPDATE pagos SET estado = 'RECHAZADO'")) {
+        const payment = state.payments.find((item) => item.id_pago === Number(params[0]));
+        if (payment?.estado === "PENDIENTE") payment.estado = "RECHAZADO";
+        return [{ affectedRows: 1 }, []];
+    }
+
     if (query.startsWith("SELECT id_detalle_pedido")) {
         return [state.details.filter((item) => item.id_pedido === Number(params[0]))
             .map((item) => ({ ...item })), []];
@@ -186,6 +268,17 @@ const execute = async (sql, params = []) => {
         return [{ affectedRows: Number(Boolean(order)) }, []];
     }
 
+    if (query.startsWith("UPDATE pedidos SET estado = 'PAGADO'")) {
+        const order = state.orders.find((item) => (
+            item.id_pedido === Number(params[0]) && item.estado === "PENDIENTE"
+        ));
+        if (order) {
+            order.estado = "PAGADO";
+            order.reserva_expira_at = null;
+        }
+        return [{ affectedRows: Number(Boolean(order)) }, []];
+    }
+
     throw new Error(`Consulta no simulada: ${query}`);
 };
 
@@ -205,6 +298,8 @@ const fakePool = {
 
 const { configurarPoolParaPruebas } = await import("../src/config/database.js");
 configurarPoolParaPruebas(fakePool);
+const { configurarStripeParaPruebas } = await import("../src/services/stripe-client.js");
+configurarStripeParaPruebas(fakeStripe);
 const { default: app } = await import("../src/app.js");
 const { expirarVencidas } = await import("../src/services/pedidos.service.js");
 
@@ -355,4 +450,110 @@ test("proceso de vencimiento libera pedidos expirados y es idempotente", async (
     assert.equal(state.orders[1].estado, "CANCELADO");
     assert.equal(state.inventory.stock_reservado, 5);
     assert.equal(state.movements.filter((item) => item.tipo_movimiento === "LIBERACION").length, 2);
+});
+
+test("solo el dueño crea un intento y el importe sale del pedido", async () => {
+    state.carts.push({ id_carrito: 3, id_usuario: 1, estado: "ACTIVO" });
+    state.cartItems.push({ id_carrito: 3, id_variante: 2, cantidad: 1 });
+    const created = await request("/api/pedidos", {
+        method: "POST", token: ownerToken, body: { id_direccion: 1 }
+    });
+    assert.equal(created.status, 201);
+    const id = created.body.data.id_pedido;
+    const forbidden = await request(`/api/pedidos/${id}/pago/intento`, {
+        method: "POST", token: otherToken
+    });
+    assert.equal(forbidden.status, 404);
+
+    const first = await request(`/api/pedidos/${id}/pago/intento`, {
+        method: "POST", token: ownerToken
+    });
+    const repeated = await request(`/api/pedidos/${id}/pago/intento`, {
+        method: "POST", token: ownerToken
+    });
+    assert.equal(first.status, 200);
+    assert.equal(first.body.data.monto, 12.5);
+    assert.equal(intents.get(state.payments.at(-1).referencia_transaccion).amount, 1250);
+    assert.equal(first.body.data.client_secret, repeated.body.data.client_secret);
+    assert.equal(intentCreates, 1);
+});
+
+test("webhook rechaza firma inválida y confirma el pago una sola vez", async () => {
+    const id = state.orders.at(-1).id_pedido;
+    const intent = intents.get(state.payments.at(-1).referencia_transaccion);
+    intent.status = "succeeded";
+    intent.amount_received = intent.amount;
+    const payload = JSON.stringify({ type: "payment_intent.succeeded", data: { object: intent } });
+
+    const invalid = await fetch(`${baseUrl}/api/pagos/stripe/webhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Stripe-Signature": "invalid" },
+        body: payload
+    });
+    assert.equal(invalid.status, 400);
+    assert.equal(state.orders.at(-1).estado, "PENDIENTE");
+
+    for (let index = 0; index < 2; index++) {
+        const response = await fetch(`${baseUrl}/api/pagos/stripe/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Stripe-Signature": "test-signature" },
+            body: payload
+        });
+        assert.equal(response.status, 200);
+    }
+    assert.equal(state.orders.at(-1).estado, "PAGADO");
+    assert.equal(state.payments.at(-1).estado, "APROBADO");
+    assert.equal(state.inventory.stock_actual, 64);
+    assert.equal(state.inventory.stock_reservado, 5);
+    assert.equal(state.movements.filter((item) => item.tipo_movimiento === "SALIDA").length, 1);
+
+    const status = await request(`/api/pedidos/${id}/pago`, { token: ownerToken });
+    assert.equal(status.body.data.estado_pedido, "PAGADO");
+    const cancel = await request(`/api/pedidos/${id}/cancelar`, {
+        method: "PATCH", token: ownerToken
+    });
+    assert.equal(cancel.status, 409);
+});
+
+test("cancelar pedido cancela Stripe antes de liberar stock", async () => {
+    state.carts.push({ id_carrito: 4, id_usuario: 1, estado: "ACTIVO" });
+    state.cartItems.push({ id_carrito: 4, id_variante: 2, cantidad: 1 });
+    const created = await request("/api/pedidos", {
+        method: "POST", token: ownerToken, body: { id_direccion: 1 }
+    });
+    const id = created.body.data.id_pedido;
+    assert.equal((await request(`/api/pedidos/${id}/pago/intento`, {
+        method: "POST", token: ownerToken
+    })).status, 200);
+    const intent = intents.get(state.payments.at(-1).referencia_transaccion);
+    const reservedBefore = state.inventory.stock_reservado;
+    const canceled = await request(`/api/pedidos/${id}/cancelar`, {
+        method: "PATCH", token: ownerToken
+    });
+    assert.equal(canceled.status, 200);
+    assert.equal(intent.status, "canceled");
+    assert.equal(state.payments.at(-1).estado, "RECHAZADO");
+    assert.equal(state.inventory.stock_reservado, reservedBefore - 1);
+});
+
+test("vencimiento detecta pago exitoso aun si el webhook llegó tarde", async () => {
+    state.carts.push({ id_carrito: 5, id_usuario: 1, estado: "ACTIVO" });
+    state.cartItems.push({ id_carrito: 5, id_variante: 2, cantidad: 1 });
+    const created = await request("/api/pedidos", {
+        method: "POST", token: ownerToken, body: { id_direccion: 1 }
+    });
+    const id = created.body.data.id_pedido;
+    assert.equal((await request(`/api/pedidos/${id}/pago/intento`, {
+        method: "POST", token: ownerToken
+    })).status, 200);
+    const intent = intents.get(state.payments.at(-1).referencia_transaccion);
+    intent.status = "succeeded";
+    intent.amount_received = intent.amount;
+    state.orders.at(-1).reserva_expira_at = new Date(Date.now() - 1000);
+    const stockBefore = state.inventory.stock_actual;
+
+    assert.equal(await expirarVencidas(), 0);
+    assert.equal(state.orders.at(-1).estado, "PAGADO");
+    assert.equal(state.inventory.stock_actual, stockBefore - 1);
+    assert.equal(state.payments.at(-1).estado, "APROBADO");
 });

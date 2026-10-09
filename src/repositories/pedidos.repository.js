@@ -110,6 +110,17 @@ export const liberarStock = async (idVariante, cantidad, executor) => {
     return result.affectedRows === 1;
 };
 
+export const descontarStockReservado = async (idVariante, cantidad, executor) => {
+    const [result] = await executor.execute(`
+        UPDATE inventario
+        SET stock_actual = stock_actual - ?,
+            stock_reservado = stock_reservado - ?
+        WHERE id_variante = ? AND stock_actual >= ? AND stock_reservado >= ?
+    `, [cantidad, cantidad, idVariante, cantidad, cantidad]);
+
+    return result.affectedRows === 1;
+};
+
 export const registrarMovimiento = async ({
     idVariante, tipo, cantidad, motivo, referencia, stockAnterior, stockNuevo
 }, executor) => {
@@ -186,6 +197,15 @@ export const obtenerDetalles = async (idPedido, executor = pool) => {
 export const marcarCancelado = async (idPedido, executor) => {
     const [result] = await executor.execute(`
         UPDATE pedidos SET estado = 'CANCELADO'
+        WHERE id_pedido = ? AND estado = 'PENDIENTE'
+    `, [idPedido]);
+
+    return result.affectedRows === 1;
+};
+
+export const marcarPagado = async (idPedido, executor) => {
+    const [result] = await executor.execute(`
+        UPDATE pedidos SET estado = 'PAGADO', reserva_expira_at = NULL
         WHERE id_pedido = ? AND estado = 'PENDIENTE'
     `, [idPedido]);
 

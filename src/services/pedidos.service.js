@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 
 import { ejecutarTransaccion } from "../config/database.js";
 import * as pedidosRepository from "../repositories/pedidos.repository.js";
+import { prepararLiberacion } from "./pagos.service.js";
 import AppError from "../utils/app-error.js";
 
 const MAX_MONEY_CENTS = 9999999999;
@@ -198,7 +199,7 @@ export const crear = async (idUsuario, { id_direccion: idDireccion, observacione
 };
 
 export const cancelar = async (idUsuario, idPedido) => {
-    await ejecutarTransaccion(async (connection) => {
+    const cancelled = await ejecutarTransaccion(async (connection) => {
         const order = await pedidosRepository.obtenerBloqueado(idPedido, idUsuario, connection);
 
         if (!order) {
@@ -206,7 +207,7 @@ export const cancelar = async (idUsuario, idPedido) => {
         }
 
         if (order.estado === "CANCELADO") {
-            return;
+            return true;
         }
 
         if (order.estado !== "PENDIENTE") {
@@ -214,11 +215,19 @@ export const cancelar = async (idUsuario, idPedido) => {
         }
 
         if (order.reserva_expira_at) {
+            if (!await prepararLiberacion(order, connection)) {
+                return false;
+            }
             await releaseReservation(order, connection, "Cancelación del cliente");
         } else {
             await pedidosRepository.marcarCancelado(order.id_pedido, connection);
         }
+        return true;
     });
+
+    if (!cancelled) {
+        throw new AppError("El pedido ya fue pagado", 409, "ORDER_ALREADY_PAID");
+    }
 
     return obtener(idUsuario, idPedido);
 };
@@ -237,6 +246,7 @@ export const expirarVencidas = async () => {
                     return false;
                 }
 
+                if (!await prepararLiberacion(order, connection)) return false;
                 await releaseReservation(order, connection, "Vencimiento de reserva");
                 return true;
             });

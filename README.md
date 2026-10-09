@@ -193,8 +193,8 @@ disponibilidad y stock en MySQL: no acepta un total enviado por el cliente.
 La operación guarda los detalles con el precio vigente, incrementa
 `inventario.stock_reservado`, registra el movimiento `RESERVA` y marca el
 carrito como `CONVERTIDO` dentro de una misma transacción. `stock_actual` no
-disminuye hasta que exista un flujo de pago aprobado. Por ahora el costo de
-envío y los descuentos son cero; el total es provisional para esta demo.
+disminuye hasta que Stripe confirme el pago. Por ahora el costo de envío y
+los descuentos son cero; el total es provisional para esta demo.
 
 Una tarea del servidor revisa cada minuto los pedidos `PENDIENTE` cuyo
 `reserva_expira_at` venció. Los marca `CANCELADO` y registra `LIBERACION`,
@@ -230,3 +230,40 @@ con `{ "id_direccion": ID_DE_TU_DIRECCION }`. Consulta el resultado con
 `PATCH /api/pedidos/:id/cancelar`. No hagas un `INSERT` directo en `pedidos`:
 la API también debe actualizar el inventario y el carrito en la misma
 transacción.
+
+### Pago de prueba con Stripe
+
+La tienda usa Stripe Payment Element en la propia web. El cliente autenticado
+crea primero un pedido y después llama a `POST /api/pedidos/:id/pago/intento`.
+La API calcula el importe desde `pedidos.total` (nunca desde el navegador),
+crea como máximo un PaymentIntent por pedido y devuelve `client_secret` y
+`publishable_key`. `GET /api/pedidos/:id/pago` consulta el estado de un pedido
+propio. Ambas rutas requieren el rol `CLIENTE_WEB`.
+
+Configura en la VM de aplicación, en su `.env` no versionado:
+
+```text
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+En Stripe Workbench > Webhooks crea un destino en modo **test** para
+`https://petshop-app.chilecentral.cloudapp.azure.com/api/pagos/stripe/webhook`
+y selecciona `payment_intent.succeeded`. Copia el secreto de firma de ese
+destino a `STRIPE_WEBHOOK_SECRET`. Reinicia la aplicación tras actualizar el
+`.env`. La clave privada y el secreto de firma no deben ir a Git, al frontend
+ni a Postman compartido. El webhook verifica la firma con el cuerpo original.
+
+Cuando Stripe confirma el cobro, una transacción marca `pagos` como
+`APROBADO` y `pedidos` como `PAGADO`, descuenta stock físico y reservado y
+registra una `SALIDA`. Los webhooks repetidos no descuentan dos veces. Antes
+de cancelar o vencer una reserva con intento de pago, el backend consulta
+Stripe: si el cobro ya se completó, conserva el pedido pagado; de lo
+contrario cancela el intento antes de liberar stock. Si el proveedor no
+responde, la reserva no se libera hasta que se pueda comprobar el estado.
+
+Las pruebas automatizadas usan un doble de Stripe y no cobran ni alteran la
+base de datos real. Para una prueba manual completa, usa una tarjeta de
+prueba indicada en la [documentación oficial de Stripe](https://docs.stripe.com/testing)
+y comprueba después el estado de `pedidos`, `pagos` e `inventario`.
