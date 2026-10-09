@@ -44,6 +44,14 @@ const buildProductFilters = (filters) => {
 export const obtenerTodos = async (filters) => {
     const { whereClause, params } = buildProductFilters(filters);
     const offset = (filters.page - 1) * filters.limit;
+    const sortOptions = {
+        destacados: "p.destacado DESC, p.created_at DESC, p.id_producto DESC",
+        recientes: "p.created_at DESC, p.id_producto DESC",
+        precio_asc: "(resumen_variantes.precio_desde IS NULL) ASC, resumen_variantes.precio_desde ASC, p.id_producto DESC",
+        precio_desc: "(resumen_variantes.precio_desde IS NULL) ASC, resumen_variantes.precio_desde DESC, p.id_producto DESC",
+        nombre: "p.nombre ASC, p.id_producto DESC"
+    };
+    const orderBy = sortOptions[filters.sort] || sortOptions.destacados;
 
     const countSql = `
         SELECT COUNT(DISTINCT p.id_producto) AS total
@@ -95,7 +103,7 @@ export const obtenerTodos = async (filters) => {
         ) resumen_variantes
             ON resumen_variantes.id_producto = p.id_producto
         ${whereClause}
-        ORDER BY p.destacado DESC, p.created_at DESC, p.id_producto DESC
+        ORDER BY ${orderBy}
         LIMIT ? OFFSET ?
     `;
 

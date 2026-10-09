@@ -17,7 +17,10 @@ const envSchema = z.object({
     JWT_SECRET: z.string().min(32, "JWT_SECRET debe tener al menos 32 caracteres")
         .default(DEVELOPMENT_JWT_SECRET),
     JWT_EXPIRES_IN: z.string().trim().min(1).default("2h"),
-    BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12)
+    BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+    STRIPE_SECRET_KEY: z.string().trim().startsWith("sk_test_").optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().trim().startsWith("pk_test_").optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().trim().optional()
 });
 
 const resultado = envSchema.safeParse(process.env);

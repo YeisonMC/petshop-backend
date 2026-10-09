@@ -253,13 +253,13 @@ after(() => new Promise((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
 }));
 
-test("GET / sirve la página de prueba del catálogo", async () => {
+test("GET / sirve el catálogo renovado con AOS local", async () => {
     const response = await requestText("/");
 
     assert.equal(response.status, 200);
     assert.match(response.contentType, /text\/html/);
-    assert.match(response.body, /Catálogo de productos/);
-    assert.match(response.body, /bootstrap@5\.3\.8/);
+    assert.match(response.body, /El catálogo PetShop/);
+    assert.match(response.body, /\/vendor\/aos\/aos\.js/);
 });
 
 test("POST /api/auth/registro crea un CLIENTE_WEB y devuelve un JWT", async () => {

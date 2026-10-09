@@ -26,9 +26,8 @@ Después de crear la base con el esquema inicial, aplicar una sola vez, en orden
 los archivos SQL de `db/migrations/` con una cuenta administradora de MySQL.
 La cuenta usada por la API no necesita permisos `ALTER`. La migración
 `20260924_add_reserva_expira_at_to_pedidos.sql` agrega a `pedidos` una fecha de
-vencimiento nullable para la futura reserva de inventario. Los pedidos existentes
-conservan `NULL`; todavía no se crean reservas ni se ejecuta una tarea de
-expiración.
+vencimiento nullable. Los pedidos existentes conservan `NULL`. El flujo actual
+crea reservas temporales y ejecuta una tarea de expiración cada minuto.
 
 ## Comandos
 
@@ -36,7 +35,77 @@ expiración.
 npm run dev
 npm start
 npm test
+npm run smoke:admin
+npm run smoke:admin:sql
 ```
+
+`smoke:admin` realiza consultas de solo lectura contra la base configurada y
+comprueba las rutas públicas. También comprueba las rutas administrativas si
+ya existe una cuenta activa `ADMIN_CATALOGO`; de lo contrario informa que las
+omitió. No modifica productos ni inventario. Para verificar el login y las
+rutas protegidas sin una cuenta administrativa permanente, ejecuta
+`npm run smoke:admin -- --temporary-admin`. Esta opción crea una cuenta de
+prueba aleatoria y la elimina al terminar; no la uses en una base donde no
+permitas escrituras temporales.
+
+`smoke:admin:sql` verifica las escrituras de todas las tablas del catálogo y
+un movimiento de inventario dentro de una sola transacción. Siempre hace
+`ROLLBACK` y comprueba que el producto de prueba no permanezca en la base.
+
+## Catálogo público y panel administrativo
+
+- `/`: catálogo público con búsqueda, filtros, ordenamiento, paginación y detalle.
+  Las animaciones AOS se sirven desde la dependencia local y respetan
+  `prefers-reduced-motion`.
+- `/admin/`: acceso separado y panel de catálogo e inventario. La página es
+  pública, pero todas sus APIs requieren un token válido de un usuario activo
+  con rol activo `ADMIN_CATALOGO`. La autorización se vuelve a comprobar contra
+  la base de datos en cada solicitud.
+
+Para crear la primera cuenta administrativa, verifica que el rol
+`ADMIN_CATALOGO` exista y esté activo. Define temporalmente las variables
+`ADMIN_NOMBRES`, `ADMIN_APELLIDOS`, `ADMIN_CORREO` y `ADMIN_PASSWORD` en la
+sesión del terminal y ejecuta `npm run admin:create`. El script valida los
+datos, genera un hash bcrypt real y rechaza correos ya registrados. No guardes
+la contraseña administrativa en Git, `.env.example` ni en el historial del
+terminal. Por ejemplo, en Bash puedes solicitarla sin eco:
+
+```bash
+read -r -p "Nombres: " ADMIN_NOMBRES
+read -r -p "Apellidos: " ADMIN_APELLIDOS
+read -r -p "Correo: " ADMIN_CORREO
+read -r -s -p "Contraseña: " ADMIN_PASSWORD; echo
+export ADMIN_NOMBRES ADMIN_APELLIDOS ADMIN_CORREO ADMIN_PASSWORD
+npm run admin:create
+unset ADMIN_NOMBRES ADMIN_APELLIDOS ADMIN_CORREO ADMIN_PASSWORD
+```
+
+El panel usa `sessionStorage` para el token: cerrar la pestaña termina la
+sesión local. En producción se debe servir todo por HTTPS. El inicio de sesión
+administrativo tiene un límite adicional de 10 intentos cada 15 minutos por IP.
+
+## Nginx y límite de solicitudes
+
+Node escucha únicamente en `127.0.0.1:3000`; accede al sitio y a la API por el
+dominio HTTPS de Nginx, no por el puerto 3000 público. En el bloque `location /`
+del servidor HTTPS, configura la conexión con estas cabeceras:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+}
+```
+
+Usa `$remote_addr` en lugar de `$proxy_add_x_forwarded_for` para reemplazar
+cualquier cabecera enviada por el visitante. Express solo confía en un proxy
+local. El límite general es de 300 solicitudes por IP cada 15 minutos y solo
+se aplica a `/api`; las páginas, CSS, JavaScript e imágenes no lo consumen.
+Mantén la regla pública del puerto 3000 cerrada en el NSG de Azure; expón solo
+80/443 y el acceso SSH restringido que necesites.
 
 ## Endpoints actuales
 
@@ -57,10 +126,43 @@ npm test
 - `GET /api/pedidos/:id`: consulta un pedido propio con sus detalles.
 - `PATCH /api/pedidos/:id/cancelar`: cancela un pedido pendiente y libera su reserva.
 - `GET /api/productos`: catálogo paginado. Acepta `page`, `limit`, `search`,
-  `categoria`, `id_marca` y `destacado`.
+  `categoria`, `id_marca`, `destacado` y `sort` (`destacados`, `recientes`,
+  `precio_asc`, `precio_desc`, `nombre`).
 - `GET /api/productos/:slug`: detalle de un producto con categorías, variantes,
   stock, imágenes y resumen de reseñas.
 - `GET /api/categorias`: categorías activas y cantidad de productos activos.
+
+### APIs administrativas
+
+Todas las rutas siguientes requieren `Authorization: Bearer <token>` obtenido
+de `POST /api/admin/auth/login` con una cuenta `ADMIN_CATALOGO`.
+
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| POST | `/api/admin/auth/login` | Iniciar sesión administrativa |
+| GET | `/api/admin/auth/perfil` | Verificar la sesión |
+| GET | `/api/admin/resumen` | Indicadores de catálogo y stock bajo |
+| GET, POST | `/api/admin/marcas` | Listar y crear marcas |
+| PATCH | `/api/admin/marcas/:id` | Editar o desactivar marca |
+| GET, POST | `/api/admin/categorias` | Listar y crear categorías |
+| PATCH | `/api/admin/categorias/:id` | Editar o desactivar categoría |
+| GET, POST | `/api/admin/productos` | Listar y crear productos |
+| GET, PATCH | `/api/admin/productos/:id` | Detallar y editar producto |
+| POST | `/api/admin/productos/:id/variantes` | Crear variante y su inventario en cero |
+| PATCH | `/api/admin/variantes/:idVariante` | Editar precio, oferta o estado de variante |
+| POST | `/api/admin/productos/:id/imagenes` | Añadir imagen HTTPS |
+| PATCH, DELETE | `/api/admin/imagenes/:idImagen` | Editar o quitar imagen |
+| GET | `/api/admin/inventario` | Listar existencias y reservas |
+| PATCH | `/api/admin/inventario/:idVariante` | Configurar mínimo y ubicación |
+| POST | `/api/admin/inventario/:idVariante/ajustes` | Ajustar stock físico con motivo |
+| GET | `/api/admin/inventario/:idVariante/movimientos` | Consultar últimos 50 movimientos |
+
+`POST /api/admin/inventario/:idVariante/ajustes` acepta una `cantidad` positiva
+o negativa y un `motivo` de al menos 5 caracteres. El ajuste se hace dentro de
+una transacción, deja un movimiento con referencia al administrador y nunca
+permite que el stock físico quede por debajo del reservado. Desactivar un
+producto, marca, categoría o variante es preferible a eliminarlo porque puede
+haber pedidos históricos relacionados. Las imágenes sí pueden quitarse.
 
 Las rutas no incluyen una versión (`v1`) porque el alcance actual de PC2 no la
 requiere y todavía no existen clientes externos que necesiten compatibilidad
@@ -91,8 +193,8 @@ disponibilidad y stock en MySQL: no acepta un total enviado por el cliente.
 La operación guarda los detalles con el precio vigente, incrementa
 `inventario.stock_reservado`, registra el movimiento `RESERVA` y marca el
 carrito como `CONVERTIDO` dentro de una misma transacción. `stock_actual` no
-disminuye hasta que exista un flujo de pago aprobado. Por ahora el costo de
-envío y los descuentos son cero; el total es provisional para esta demo.
+disminuye hasta que Stripe confirme el pago. Por ahora el costo de envío y
+los descuentos son cero; el total es provisional para esta demo.
 
 Una tarea del servidor revisa cada minuto los pedidos `PENDIENTE` cuyo
 `reserva_expira_at` venció. Los marca `CANCELADO` y registra `LIBERACION`,
@@ -128,3 +230,40 @@ con `{ "id_direccion": ID_DE_TU_DIRECCION }`. Consulta el resultado con
 `PATCH /api/pedidos/:id/cancelar`. No hagas un `INSERT` directo en `pedidos`:
 la API también debe actualizar el inventario y el carrito en la misma
 transacción.
+
+### Pago de prueba con Stripe
+
+La tienda usa Stripe Payment Element en la propia web. El cliente autenticado
+crea primero un pedido y después llama a `POST /api/pedidos/:id/pago/intento`.
+La API calcula el importe desde `pedidos.total` (nunca desde el navegador),
+crea como máximo un PaymentIntent por pedido y devuelve `client_secret` y
+`publishable_key`. `GET /api/pedidos/:id/pago` consulta el estado de un pedido
+propio. Ambas rutas requieren el rol `CLIENTE_WEB`.
+
+Configura en la VM de aplicación, en su `.env` no versionado:
+
+```text
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+En Stripe Workbench > Webhooks crea un destino en modo **test** para
+`https://petshop-app.chilecentral.cloudapp.azure.com/api/pagos/stripe/webhook`
+y selecciona `payment_intent.succeeded`. Copia el secreto de firma de ese
+destino a `STRIPE_WEBHOOK_SECRET`. Reinicia la aplicación tras actualizar el
+`.env`. La clave privada y el secreto de firma no deben ir a Git, al frontend
+ni a Postman compartido. El webhook verifica la firma con el cuerpo original.
+
+Cuando Stripe confirma el cobro, una transacción marca `pagos` como
+`APROBADO` y `pedidos` como `PAGADO`, descuenta stock físico y reservado y
+registra una `SALIDA`. Los webhooks repetidos no descuentan dos veces. Antes
+de cancelar o vencer una reserva con intento de pago, el backend consulta
+Stripe: si el cobro ya se completó, conserva el pedido pagado; de lo
+contrario cancela el intento antes de liberar stock. Si el proveedor no
+responde, la reserva no se libera hasta que se pueda comprobar el estado.
+
+Las pruebas automatizadas usan un doble de Stripe y no cobran ni alteran la
+base de datos real. Para una prueba manual completa, usa una tarjeta de
+prueba indicada en la [documentación oficial de Stripe](https://docs.stripe.com/testing)
+y comprueba después el estado de `pedidos`, `pagos` e `inventario`.

@@ -69,13 +69,13 @@ export const registrarCliente = async (data) => {
     return createAuthResponse(user);
 };
 
-export const iniciarSesion = async ({ correo, password }) => {
+export const iniciarSesion = async ({ correo, password }, rolRequerido = null) => {
     const user = await authRepository.obtenerPorCorreo(correo);
     const validPassword = user
         ? await bcrypt.compare(password, user.password_hash)
         : false;
 
-    if (!user || !validPassword) {
+    if (!user || !validPassword || (rolRequerido && user.rol !== rolRequerido)) {
         throw new AppError(
             "El correo o la contraseña son incorrectos",
             401,
@@ -83,7 +83,7 @@ export const iniciarSesion = async ({ correo, password }) => {
         );
     }
 
-    if (!user.estado) {
+    if (!user.estado || user.rol_activo === 0) {
         throw new AppError(
             "La cuenta se encuentra deshabilitada",
             403,

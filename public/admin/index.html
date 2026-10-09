@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="Panel de administración del catálogo PetShop">
+    <title>PetShop Studio | Administración</title>
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+    <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <symbol id="i-paw" viewBox="0 0 24 24"><path d="M12 20c-2.2 0-3.1-1.5-5.2-1.5-1.7 0-3.2-.9-3.2-2.6 0-2.1 2.2-3.2 3.7-4.8 1.2-1.3 2.5-2.6 4.7-2.6s3.5 1.3 4.7 2.6c1.5 1.6 3.7 2.7 3.7 4.8 0 1.7-1.5 2.6-3.2 2.6-2.1 0-3 1.5-5.2 1.5ZM5.4 8.6c-.8.4-2-.2-2.7-1.4-.7-1.2-.6-2.5.2-2.9.8-.5 2 .2 2.7 1.4.7 1.2.6 2.5-.2 2.9Zm4.2-2c-.9.1-1.8-.9-2-2.3-.2-1.4.4-2.6 1.3-2.7.9-.1 1.8.9 2 2.3.2 1.4-.4 2.6-1.3 2.7Zm4.8 0c-.9-.1-1.5-1.3-1.3-2.7.2-1.4 1.1-2.4 2-2.3.9.1 1.5 1.3 1.3 2.7-.2 1.4-1.1 2.4-2 2.3Zm4.2 2c-.8-.4-.9-1.7-.2-2.9.7-1.2 1.9-1.9 2.7-1.4.8.4.9 1.7.2 2.9-.7 1.2-1.9 1.8-2.7 1.4Z" fill="currentColor"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+        <symbol id="i-box" viewBox="0 0 24 24"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Z"/><path d="m3 7 9 4 9-4M12 11v10"/></symbol>
+        <symbol id="i-stack" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+        <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10V4Z"/><circle cx="8" cy="8" r="1"/></symbol>
+        <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V9m6 11V4m5 16v-7m5 7V8"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5M14 16l4-4-4-4m4 4H9"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.2"/></symbol>
+    </svg>
+
+    <main id="login-view" class="login-layout">
+        <section class="login-art" aria-label="PetShop Studio">
+            <a class="brand brand-light" href="/" aria-label="Ir al catálogo público">
+                <span class="brand-mark"><svg><use href="#i-paw"></use></svg></span>
+                <span>petshop<span class="brand-dot">.</span><small>studio</small></span>
+            </a>
+            <div class="login-art-content">
+                <span class="eyebrow">TU CENTRO DE OPERACIONES</span>
+                <h1>Todo tu catálogo, <em>bajo control.</em></h1>
+                <p>Productos, variantes e inventario en un solo lugar. Una experiencia clara para tomar mejores decisiones cada día.</p>
+                <div class="login-art-orbit" aria-hidden="true">
+                    <div class="orbit-ring orbit-ring-one"></div><div class="orbit-ring orbit-ring-two"></div>
+                    <span class="orbit-core"><svg><use href="#i-paw"></use></svg></span>
+                    <span class="orbit-chip orbit-chip-one">Catálogo actualizado</span>
+                    <span class="orbit-chip orbit-chip-two">Stock en tiempo real</span>
+                </div>
+            </div>
+            <p class="login-art-footer">Administración segura · PetShop 2026</p>
+        </section>
+        <section class="login-form-area">
+            <div class="login-card">
+                <span class="eyebrow eyebrow-dark">ACCESO ADMINISTRATIVO</span>
+                <h2>Bienvenido de nuevo</h2>
+                <p>Ingresa con tu cuenta de administración de catálogo.</p>
+                <form id="login-form" novalidate>
+                    <label for="login-email">Correo electrónico</label>
+                    <input id="login-email" name="correo" type="email" autocomplete="username" placeholder="admin@petshop.pe" required>
+                    <label for="login-password">Contraseña</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Tu contraseña" required>
+                    <p id="login-error" class="form-error" role="alert" hidden></p>
+                    <button class="button button-primary login-submit" type="submit">Ingresar al panel <svg><use href="#i-arrow"></use></svg></button>
+                </form>
+                <p class="login-help">El acceso está reservado para cuentas con el rol <strong>ADMIN_CATALOGO</strong>.</p>
+                <a class="login-back" href="/">← Volver al catálogo</a>
+            </div>
+        </section>
+    </main>
+
+    <div id="admin-view" class="admin-layout" hidden>
+        <aside id="sidebar" class="sidebar" aria-label="Navegación del administrador">
+            <a class="brand" href="/admin/">
+                <span class="brand-mark"><svg><use href="#i-paw"></use></svg></span>
+                <span>petshop<span class="brand-dot">.</span><small>studio</small></span>
+            </a>
+            <p class="sidebar-caption">ESPACIO DE TRABAJO</p>
+            <nav class="sidebar-nav" aria-label="Secciones">
+                <button class="nav-link active" data-page="resumen"><svg><use href="#i-grid"></use></svg><span>Resumen</span></button>
+                <button class="nav-link" data-page="productos"><svg><use href="#i-box"></use></svg><span>Productos</span></button>
+                <button class="nav-link" data-page="inventario"><svg><use href="#i-chart"></use></svg><span>Inventario</span></button>
+                <button class="nav-link" data-page="categorias"><svg><use href="#i-stack"></use></svg><span>Categorías</span></button>
+                <button class="nav-link" data-page="marcas"><svg><use href="#i-tag"></use></svg><span>Marcas</span></button>
+            </nav>
+            <div class="sidebar-bottom">
+                <a class="sidebar-store" href="/" target="_blank" rel="noopener">Ver tienda pública <svg><use href="#i-arrow"></use></svg></a>
+                <button id="logout-button" class="logout-button" type="button"><svg><use href="#i-logout"></use></svg> Cerrar sesión</button>
+            </div>
+        </aside>
+        <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+        <div class="admin-main">
+            <header class="topbar">
+                <button id="menu-button" class="icon-button mobile-menu" type="button" aria-label="Abrir menú"><svg><use href="#i-menu"></use></svg></button>
+                <div class="breadcrumb">Panel <span>/</span> <strong id="breadcrumb-page">Resumen</strong></div>
+                <div class="topbar-right"><span class="live-badge"><span></span> Entorno activo</span><span id="admin-avatar" class="avatar">A</span><span id="admin-name" class="admin-name">Administrador</span></div>
+            </header>
+            <main class="workspace">
+                <div class="workspace-heading">
+                    <div><span id="page-eyebrow" class="eyebrow eyebrow-dark">VISTA GENERAL</span><h1 id="page-title">Resumen</h1><p id="page-description">Una mirada clara a todo lo que ocurre en tu tienda.</p></div>
+                    <div id="page-actions" class="page-actions"></div>
+                </div>
+                <div id="page-content" aria-live="polite"></div>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="editor-dialog" class="editor-dialog" aria-labelledby="dialog-title">
+        <div class="dialog-header"><div><span id="dialog-eyebrow" class="eyebrow eyebrow-dark">ADMINISTRAR</span><h2 id="dialog-title">Editar</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Cerrar"><svg><use href="#i-close"></use></svg></button></div>
+        <div id="dialog-body" class="dialog-body"></div>
+    </dialog>
+    <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
+    <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
