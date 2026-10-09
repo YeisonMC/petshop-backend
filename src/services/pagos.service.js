@@ -119,7 +119,8 @@ export const crearIntento = async (idUsuario, idPedido) => ejecutarTransaccion(a
         intent = await stripe.paymentIntents.create({
             amount: toCents(order.total),
             currency: "pen",
-            payment_method_types: ["card"],
+            // payment_method_types: ["card"],
+            automatic_payment_methods: { enabled: true },
             metadata: {
                 id_pedido: String(order.id_pedido),
                 codigo_pedido: order.codigo_pedido
